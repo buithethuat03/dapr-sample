@@ -1,40 +1,37 @@
-#1. Cài đặt và khởi tạo dự án Dapr
-
-1. Cài đặt Dapr từ terminal
+Dapr Sample
+Hướng dẫn cài đặt, khởi tạo và sử dụng Dapr để quản lý trạng thái (State Management) trong ứng dụng.
+1. Cài đặt và khởi tạo dự án Dapr
+1.1. Cài đặt Dapr từ terminal
 wget -q https://raw.githubusercontent.com/dapr/cli/master/install/install.sh -O - | /bin/bash
 
-2. Xác minh cài đặt
+1.2. Xác minh cài đặt
 dapr -h
 
-3. Cài Dapr runtime
+1.3. Cài Dapr runtime
 dapr init
 docker ps
 
-Output: các container được tạo liên quan đến Dapr
-
-4. Kiểm tra phiên bản Dapr
+Output: Các container được tạo liên quan đến Dapr.
+1.4. Kiểm tra phiên bản Dapr
 dapr --version
 
-5. Xác minh components directory được khởi tạo
+1.5. Xác minh components directory được khởi tạo
 ls $HOME/.dapr
 
 Output: bin components config.yaml
+2. State Management
 
+Ngôn ngữ: JavaScript (Node.js)
+Lưu trữ: Redis (mặc định của Dapr)
 
-#2. State Management
-Ngôn ngữ: Js (node.js), lưu trữ: Redis (mặc định của Dapr)
-
-#2.1. Save & Get & Delete State
+2.1. Save, Get & Delete State
 Mục đích: Thực hiện các thao tác cơ bản với state: lưu, đọc và xóa dữ liệu thông qua Dapr.
-
-Tạo dự án mới với nodejs
+Tạo dự án mới với Node.js:
 npm init -y
 npm install @dapr/dapr
 
 Code: ./get-save-delete state/index.ts
-
 Output:
-
 thuat03@thuat03:~/Documents/VSCode/dapr-sample/get-save-delete state$ dapr run --app-id orderprocessing --app-port 6001 --dapr-http-port 3601 --dapr-grpc-port 60001 node index.js
 ...
 == APP == 
@@ -66,11 +63,10 @@ thuat03@thuat03:~/Documents/VSCode/dapr-sample/get-save-delete state$ dapr run -
 terminated signal received: shutting down
 ✅  Exited Dapr successfully
 
-#2.2. State TTL
+2.2. State TTL
 Mục đích: Lưu dữ liệu có thời gian sống giới hạn (hết hạn sẽ tự xóa), phù hợp cho OTP, session, cache tạm thời.
 Code: ./ttl/index.ts
-
-Output: 
+Output:
 thuat03@thuat03:~/Documents/VSCode/dapr-sample/ttl$ dapr run --app-id orderprocessing --app-port 6001 --dapr-http-port 3601 --dapr-grpc-port 60001 node index.js
 ...
 == APP == 
@@ -94,12 +90,12 @@ thuat03@thuat03:~/Documents/VSCode/dapr-sample/ttl$ dapr run --app-id orderproce
 terminated signal received: shutting down
 ✅  Exited Dapr successfully
 
-#2.3. Share state between apps
+2.3. Share State Between Apps
 Mục đích: Cho phép nhiều service/app cùng đọc và ghi chung một state store, giúp chia sẻ dữ liệu mà không cần gọi trực tiếp giữa các service.
-
 Code:
-service-1: ./share-state-between-apps/save.js (lưu dữ liệu)
-service-2: ./share-state-between-apps/read.js (đọc dữ liệu)
+
+Service 1: ./share-state-between-apps/save.js (lưu dữ liệu)
+Service 2: ./share-state-between-apps/read.js (đọc dữ liệu)
 
 Output:
 Service 1:
@@ -116,7 +112,7 @@ thuat03@thuat03:~/Documents/VSCode/dapr-sample/share-state-between-apps$ dapr ru
 terminated signal received: shutting down
 ✅  Exited Dapr successfully
 
-Service 2: 
+Service 2:
 thuat03@thuat03:~/Documents/VSCode/dapr-sample/share-state-between-apps$ dapr run --app-id service-a node read.js
 ...
 == APP == (node:67793) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/thuat03/Documents/VSCode/dapr-sample/share-state-between-apps/read.js is not specified and it doesn't parse as CommonJS.
@@ -130,126 +126,129 @@ thuat03@thuat03:~/Documents/VSCode/dapr-sample/share-state-between-apps$ dapr ru
 terminated signal received: shutting down
 ✅  Exited Dapr successfully
 
---Cơ chế xử lý xung đột khi nhiều service cùng ghi: Etag + Concurrency Policy
-Cách dùng cơ bản: 
+Cơ chế xử lý xung đột khi nhiều service cùng ghi: Etag + Concurrency Policy
+Cách dùng cơ bản:
+
 Ghi state: ./share-state-between-apps/writer.js
-Đọc state kèm etag: ./share-state-between-apps/etag.js
-Mỗi khi update state thành công, giá trị etag sẽ thay đổi
+Đọc state kèm Etag: ./share-state-between-apps/etag.js
+
+Mỗi khi update state thành công, giá trị Etag sẽ thay đổi.
 Chính sách ghi:
-first-write: ai ghi trước thắng, người sau bị từ chối nếu etag sai
-last-write: ai ghi sau thắng (ghi đè)
 
-Trong ví dụ đọc state kèm etag ở trên minh họa cho việc 2 service cùng đọc và update một state, nhưng vì service A update trước (thành công) dẫn đến etag thay đổi, lúc này service B update state sau bằng giá trị etag cũ nên bị từ chối
+First-write: Ai ghi trước thắng, người sau bị từ chối nếu Etag sai.
+Last-write: Ai ghi sau thắng (ghi đè).
 
-Output: 
+Ví dụ: Minh họa cho việc 2 service cùng đọc và update một state, nhưng vì service A update trước (thành công) dẫn đến Etag thay đổi, lúc này service B update state sau bằng giá trị Etag cũ nên bị từ chối.
+Output:
 == APP == Service A: Update thành công!
 == APP == Service B: Conflict! Không update được.
 
-#2.4. Query state:
+2.4. Query State
 Lợi ích: Dapr đóng vai trò trung gian giữa service và DB. Service không cần biết DB là loại gì (MongoDB, PostgreSQL, CosmosDB, …), chỉ cần gửi truy vấn theo định dạng JSON DSL của Dapr. Dapr sẽ dịch truy vấn đó sang câu lệnh phù hợp với DB backend và trả về kết quả JSON.
-
 Cách dùng: Gửi request qua HTTP hoặc gRPC. Body của request gồm 3 phần chính:
-	filter – điều kiện lọc.
-	sort – sắp xếp.
-	page – phân trang.
-(Chi tiết: https://docs.dapr.io/developing-applications/building-blocks/state-management/howto-state-query-api/)
 
-#2.5. Build a stateful service
+filter: Điều kiện lọc.
+sort: Sắp xếp.
+page: Phân trang.
+
+Chi tiết: https://docs.dapr.io/developing-applications/building-blocks/state-management/howto-state-query-api/
+2.5. Build a Stateful Service
 Mục đích: Một ứng dụng duy nhất nhưng được scale ra nhiều instance.
-Mục tiêu: đồng bộ trạng thái giữa các instance để service hoạt động như một thể thống nhất.
-
+Mục tiêu: Đồng bộ trạng thái giữa các instance để service hoạt động như một thể thống nhất.
 Code: ./build-a-stateful-service
+Run code:
+thuat03@thuat03:~/Documents/VSCode/dapr-sample/build-a-stateful-service$ dapr run --app-id state-service --app-port 3000 --dapr-http-port 3500 node index.js
 
-Run code: thuat03@thuat03:~/Documents/VSCode/dapr-sample/build-a-stateful-service$ dapr run --app-id state-service --app-port 3000 --dapr-http-port 3500 node index.js
+Test API:
 
-Sau khi chạy code, có thể gửi request đến các api này để test tính năng save/get/delete của service với Dapr
-
-Save: thuat03@thuat03:~$ curl -X POST http://localhost:3000/state/user1 -H "Content-Type: application/json" -d '{"value":"Hello Dapr"}'
+Save:thuat03@thuat03:~$ curl -X POST http://localhost:3000/state/user1 -H "Content-Type: application/json" -d '{"value":"Hello Dapr"}'
 {"message":"Saved key=user1","value":"Hello Dapr"}
 
-Get: thuat03@thuat03:~$ curl http://localhost:3000/state/user1
+
+Get:thuat03@thuat03:~$ curl http://localhost:3000/state/user1
 {"key":"user1","value":"Hello Dapr"}
 
-Delete: thuat03@thuat03:~$ curl -X DELETE http://localhost:3000/state/user1
+
+Delete:thuat03@thuat03:~$ curl -X DELETE http://localhost:3000/state/user1
 {"message":"Deleted key=user1"}
 
-Các cơ chế (giống với share state between apps)
-Last-write-wins (mặc định):
-Ai ghi cuối cùng thì dữ liệu theo người đó. Dễ bị ghi đè khi nhiều instance update cùng lúc.
 
+
+Cơ chế (giống với Share State Between Apps):
+
+Last-write-wins (mặc định): Ai ghi cuối cùng thì dữ liệu theo người đó. Dễ bị ghi đè khi nhiều instance update cùng lúc.
 First-write-wins (dùng ETag):
 Mỗi bản ghi có ETag (version).
 Khi update, bạn phải gửi kèm ETag hiện tại.
 Nếu trong lúc đó có instance khác đã update (ETag đổi) → update fail (409 Conflict) → bạn có thể retry hoặc xử lý khác.
+Lợi ích: Giải quyết race condition (2 instance cùng cộng điểm → không bị mất dữ liệu).
 
-=> Giải quyết race condition (2 instance cùng cộng điểm → không bị mất dữ liệu).
 
-#2.6. How to: enable the transactional outbox pattern
-https://docs.dapr.io/developing-applications/building-blocks/state-management/howto-outbox/
+
+2.6. How to: Enable the Transactional Outbox Pattern
 Mô tả: Thay vì để service vừa ghi dữ liệu vừa tự publish event vào message queue (Kafka, RabbitMQ, …), Dapr cho phép bạn kết hợp thao tác lưu state và publish event trong một transaction duy nhất.
-Luồng ví dụ: 
-
+Luồng ví dụ:
 User → Order Service (Service A) → Dapr → MongoDB
-                                                       ↓
-                                    Kafka (topic: OrderCreated)
-                                                       ↓
+                                     ↓
+                                   Kafka (topic: OrderCreated)
+                                     ↓
         ┌────────────────────────────┴───────────────────────────┐
-            ↓                                                                                  ↓
-Inventory Service (Service B)                          Notification Service (Service C)
-Update stock                                           Send confirmation email
-
+        ↓                                                        ↓
+Inventory Service (Service B)                     Notification Service (Service C)
+Update stock                                     Send confirmation email
 
 Các trường hợp:
-1. Chỉ ghi state:
-Thao tác với state store qua Dapr như bình thường. (Xem #2.1)
 
-2. Ghi state + publish event:
-Sau khi ghi state, yêu cầu Dapr tự động publish event.
+Chỉ ghi state: Thao tác với state store qua Dapr như bình thường. (Xem #2.1)
+Ghi state + publish event: Sau khi ghi state, yêu cầu Dapr tự động publish event.
+Ghi state + publish event (customize event): Giống trường hợp 2, nhưng ghi đè một số field trong event trước khi Dapr publish.
 
-3. Ghi state + publish event (customize event):
-Giống trường hợp 2, nhưng ghi đè một số field trong event trước khi Dapr publish.
-
-Cấu hình:
-Để sử dụng Outbox, cần thêm các component config, ví dụ:
+Cấu hình:Để sử dụng Outbox, cần thêm các component config, ví dụ:
 
 mongodb-outbox.yaml (state store outbox)
 kafka-pubsub.yaml (pub/sub)
 
-Sau đó, khi chạy lệnh dapr run thì thêm trường "--components-path ./components"
-Ví dụ: dapr run --app-id state-service --app-port 3000 --components-path ./components --dapr-http-port 3500 node index.js
+Chạy lệnh:
+dapr run --app-id state-service --app-port 3000 --components-path ./components --dapr-http-port 3500 node index.js
 
+Chi tiết: https://docs.dapr.io/developing-applications/building-blocks/state-management/howto-outbox/
+2.7. Encrypt State (Mã hóa state)
+Mô tả: Bảo vệ dữ liệu trong state store bằng các thuật toán mã hóa. Khi thao tác với Dapr API, dữ liệu sẽ được mã hóa trước khi lưu và được tự động giải mã khi đọc.
+Các bước:
 
-#2.7. Encrypt State (Mã hóa state)
-Mô tả: bảo vệ dữ liệu trong state store bằng các thuật toán mã hóa
-Khi thao tác với Dapr Api, dữ liệu sẽ được mã hóa trước khi lưu và được tự động giải mã khi đọc
-Bước 1: Tạo secret key, ví dụ: 
+Tạo secret key:
 openssl rand 16 | hexdump -v -e '/1 "%02x"'
-# Result will be similar to "cb321007ad11a9d23f963bff600d58e0"
-Sau đó lưu vào một nơi nào đó, trong ví dụ sẽ lưu vào ./encrypt-state/app-secret.json
-Bước 2: Tạo secret store: ./encrypt-state/components/local-secret-store.yaml 
-Bước 3: Cấu hình state store với encryption: ./encrypt-state/components/statestore.yaml
-Bước 4: Chuẩn bị service (index.js)
-Bước 5: Chạy ứng dụng
-Output:
+
+Kết quả: Giống như cb321007ad11a9d23f963bff600d58e0
+Lưu vào: ./encrypt-state/app-secret.json
+
+Tạo secret store:
+./encrypt-state/components/local-secret-store.yaml
+
+
+Cấu hình state store với encryption:
+./encrypt-state/components/statestore.yaml
+
+
+Chuẩn bị service:
+index.js
+
+
+Chạy ứng dụng:
 thuat03@thuat03:~/Documents/VSCode/dapr-sample/encrypt-state$ dapr run --app-id node-encrypt --components-path ./components --dapr-http-port 3500 node index.js
-...
+
+Output:
 == APP == Saved via Dapr: user:encrypted status: 204
 == APP == 
 == APP == Raw response from Dapr: map[email:abc@gmail.com name:Encrypted Thuật]
 
-Bước 6: Kiểm tra trong Redis: 
+
+Kiểm tra trong Redis:
 thuat03@thuat03:~$ docker exec -it dapr_redis redis-cli
 127.0.0.1:6379> keys *
 1) "node-encrypt||user:encrypted"
 127.0.0.1:6379> hgetall "node-encrypt||user:encrypted"
 1) "data"
-2) "WFFhHhpRQ3+ps3uFMo88p8Khraa84ufRubei84defTFxxoZ3aDQxkUCgdWQ+I6yzxRa74NfqiAb7MWpOTaOxSgagCrBpN6jy0w7E||mykey"
+2) "WFFhHhpRQ3+ps3uFMo88p8Khraa84Chromebookuei84defTFxxoZ3aDQxkUCgdWQ+I6yzxRa74NfqiAb7MWpOTaOxSgagCrBpN6jy0w7E||mykey"
 3) "version"
 4) "1"
-
-
-
-
-
-
-
