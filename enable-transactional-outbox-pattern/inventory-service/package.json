@@ -1,0 +1,12 @@
+{
+  "name": "inventory-service",
+  "version": "1.0.0",
+  "description": "Inventory Service for e-commerce system with Dapr",
+  "main": "inventory-service.js",
+  "scripts": {
+    "start": "node inventory-service.js"
+  },
+  "dependencies": {
+    "@dapr/dapr": "^3.0.0"
+  }
+}

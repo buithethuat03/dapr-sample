@@ -1,0 +1,13 @@
+{
+  "name": "order-service",
+  "version": "1.0.0",
+  "description": "Order Service for e-commerce system with Dapr",
+  "main": "order-service.js",
+  "scripts": {
+    "start": "node order-service.js"
+  },
+  "dependencies": {
+    "@dapr/dapr": "^3.0.0",
+    "express": "^4.17.1"
+  }
+}
